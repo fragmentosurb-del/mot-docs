@@ -91,12 +91,38 @@ def css_fontes():
                            ("latin", "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD")):
             regras.append(f"@font-face{{font-family:Oswald;font-style:normal;font-weight:{peso};font-display:block;"
                           f"src:url('fontes/oswald-{sub}-{peso}-normal.woff2') format('woff2');unicode-range:{faixa};}}")
+    # Fontes de reserva para os símbolos que a Oswald não tem, embutidas para que a paginação
+    # seja igual em qualquer computador (sem elas, cada sistema escolhe a sua e o e-book muda de tamanho).
+    for nome, pesos in (("liberation", (400, 700)), ("dejavu", (400, 700)), ("emoji", (None,))):
+        for peso in pesos:
+            arq = f"reserva-{nome}-{peso}.woff2" if peso else f"reserva-{nome}.woff2"
+            w = f"font-weight:{peso};" if peso else "font-weight:100 900;"
+            regras.append(f"@font-face{{font-family:'MOT Reserva';font-style:normal;{w}font-display:block;"
+                          f"src:url('fontes/{arq}') format('woff2');unicode-range:{','.join(RESERVA[nome])};}}")
     return "\n".join(regras)
+
+# caracteres que cada fonte de reserva cobre (os mesmos que o navegador escolhia na v1.3)
+RESERVA = {
+    "liberation": ["U+2192", "U+03A3", "U+03BA", "U+03B1", "U+2265", "U+2194", "U+2260"],
+    "dejavu": ["U+2208", "U+1D62"],
+    "emoji": ["U+2696", "U+FE0F", "U+1F534", "U+1F7E1", "U+1F7E2", "U+2705", "U+274C"],
+}
+
+def conferir_glifos(sopa):
+    """Falha se o texto usar um caractere que nem a Oswald nem as fontes de reserva cobrem."""
+    from fontTools.ttLib import TTFont
+    cobertos = set()
+    for f in (GER / "fontes").glob("oswald-*-400-normal.woff2"):
+        cobertos |= set(TTFont(f).getBestCmap())
+    for lista in RESERVA.values():
+        cobertos |= {int(u[2:], 16) for u in lista}
+    faltam = sorted({c for c in texto(sopa.find("doc-page")) if not c.isspace() and ord(c) not in cobertos})
+    return [f"{c} (U+{ord(c):04X})" for c in faltam]
 
 ESTILO_BASE = """
   doc-page:not(:defined) { visibility: hidden; }
   body { margin: 0; }
-  .page, .page * { font-family: Oswald, Arial, sans-serif !important; }
+  #src, #src *, .page, .page * { font-family: Oswald, 'MOT Reserva', sans-serif !important; }
   a { color: #16181a; text-decoration: none; border-bottom: 1px solid rgba(22,24,26,.4); }
   sup { font-size: 62%; line-height: 0; vertical-align: super; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -176,7 +202,8 @@ def marcar(blocos):
 def imprimir(html_path, pdf_path):
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
-        nav = p.chromium.launch()
+        # sem arredondamento da largura das letras: a paginação fica igual em qualquer sistema
+        nav = p.chromium.launch(args=["--font-render-hinting=none"])
         pg = nav.new_page(viewport={"width": 1000, "height": 1400})
         pg.goto(html_path.resolve().as_uri())
         pg.wait_for_function("window.__pageIndex !== undefined", timeout=180000)
@@ -202,6 +229,8 @@ def imprimir(html_path, pdf_path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--so-conferir", action="store_true")
+    ap.add_argument("--atualizar-referencia", action="store_true",
+                    help="grava a paginação atual como referência (usar só depois de conferir o PDF)")
     ap.add_argument("--base-url", default="https://fragmentosurb-del.github.io/mot-docs")
     a = ap.parse_args()
 
@@ -219,6 +248,10 @@ def main():
             print(f"  - {f['termo']!r} ({f['motivo']}): …{f['trecho']}…")
         sys.exit(1)
     print("conferência de termos: ok")
+    faltam = conferir_glifos(sopa)
+    if faltam:
+        sys.exit("ERRO: caracteres sem fonte embutida (acrescente em RESERVA e gere o recorte da fonte): " + ", ".join(faltam))
+    print("conferência de fontes: ok")
     if a.so_conferir:
         return
 
@@ -265,6 +298,21 @@ def main():
     if divergentes:
         sys.exit(f"ERRO: recortes diferentes do e-book: {divergentes}")
     print("conferência dos recortes contra o e-book: ok (todas as páginas iguais)")
+
+    # 4. paginação igual à de referência (conferida contra o PDF oficial antes de ir para o main)
+    atual = {"versao": ver, "ebook": info["n"],
+             "documentos": {d["arquivo"]: d["paginas_no_ebook"] for d in manifesto["documentos"]}}
+    ref_path = GER / "referencia.json"
+    if a.atualizar_referencia:
+        ref_path.write_text(json.dumps(atual, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print("referência de paginação gravada em gerador/referencia.json")
+    elif ref_path.exists():
+        ref = json.loads(ref_path.read_text(encoding="utf-8"))
+        if ref != atual:
+            sys.exit("ERRO: a paginação mudou em relação a gerador/referencia.json.\n"
+                     f"  referência: {json.dumps(ref, ensure_ascii=False)}\n  agora:      {json.dumps(atual, ensure_ascii=False)}\n"
+                     "Se a mudança de texto é intencional, gere de novo com --atualizar-referencia e confira as citações.")
+        print("conferência da paginação contra a referência: ok")
 
 def verificar_recortes(manifesto):
     from pypdf import PdfReader
