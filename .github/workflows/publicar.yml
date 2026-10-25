@@ -37,9 +37,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python gerador/diag.py > diag.txt 2>&1 || true
-          { echo "**Diagnóstico**"; echo '```'; cat diag.txt; echo '```'; } > comentario_diag.md
-          gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --body-file comentario_diag.md
           { echo "**Resultado do gerador** (${{ job.status }})"; echo; echo '```'; tail -n 40 resultado.txt; echo '```'; } > comentario.md
           gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --body-file comentario.md
       - uses: actions/upload-pages-artifact@v3

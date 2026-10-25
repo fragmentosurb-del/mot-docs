@@ -202,7 +202,8 @@ def marcar(blocos):
 def imprimir(html_path, pdf_path):
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
-        nav = p.chromium.launch()
+        # sem arredondamento da largura das letras: a paginação fica igual em qualquer sistema
+        nav = p.chromium.launch(args=["--font-render-hinting=none"])
         pg = nav.new_page(viewport={"width": 1000, "height": 1400})
         pg.goto(html_path.resolve().as_uri())
         pg.wait_for_function("window.__pageIndex !== undefined", timeout=180000)
