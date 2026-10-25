@@ -17,3 +17,13 @@ Antes de publicar, o gerador **falha** se:
 - alguma página de um documento individual diferir da página correspondente do e-book.
 
 Gerar localmente: `python3 gerador/gerar.py` (requer `beautifulsoup4`, `lxml`, `pypdf`, `playwright`).
+
+## Vigia semanal
+
+Toda segunda-feira, às 8h37 (Brasília), `gerador/vigia.py` confere:
+- se a página [mot-app](https://www.fragmentos.arq.br/mot-app) tem link para o e-book e para os 10 documentos, e se todos os links abrem;
+- se algum link ainda aponta para um PDF antigo do Wix;
+- se o texto da página tem termo aposentado (`termos_aposentados` e `termos_pagina`, em `gerador/documentos.json`);
+- se o Pergunte ao MOT usa a mesma versão e a mesma paginação do e-book no ar.
+
+Se achar algum problema, o vigia abre uma issue com a etiqueta `vigia` e o GitHub avisa por e-mail. Enquanto o problema continuar, ele comenta na mesma issue; quando tudo estiver certo, ele fecha a issue sozinho. Para rodar fora da agenda: Actions → "Vigia semanal da página mot-app" → Run workflow.
