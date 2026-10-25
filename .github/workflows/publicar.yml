@@ -10,6 +10,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  pull-requests: write
 
 concurrency:
   group: pages
@@ -28,7 +29,16 @@ jobs:
           pip install beautifulsoup4==4.12.3 lxml==5.3.0 pypdf==5.1.0 fonttools==4.55.0 brotli==1.1.0 playwright==1.63.0
           python -m playwright install --with-deps chromium
       - name: Gerar e conferir
-        run: python gerador/gerar.py
+        run: |
+          set -o pipefail
+          python gerador/gerar.py 2>&1 | tee resultado.txt
+      - name: Comentar o resultado no pull request
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          { echo "**Resultado do gerador** (${{ job.status }})"; echo; echo '```'; tail -n 40 resultado.txt; echo '```'; } > comentario.md
+          gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --body-file comentario.md
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:
