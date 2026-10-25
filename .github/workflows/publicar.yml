@@ -1,0 +1,46 @@
+name: Gerar e publicar documentos do MOT
+
+on:
+  push:
+    branches: [main]
+  pull_request:          # no PR só gera e confere, sem publicar
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependências
+        run: |
+          pip install beautifulsoup4==4.12.3 lxml==5.3.0 pypdf==5.1.0 playwright==1.48.0
+          python -m playwright install --with-deps chromium
+      - name: Gerar e conferir
+        run: python gerador/gerar.py
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: saida
+
+  publicar:
+    if: github.event_name != 'pull_request'
+    needs: gerar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

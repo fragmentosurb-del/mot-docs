@@ -1,0 +1,26 @@
+{
+  "_leia": "Cada documento individual é um recorte do e-book. 'inicio' é o começo do título do primeiro bloco; o recorte segue pelos blocos seguintes até o próximo divisor de estágio, o próximo documento ou um título de 'parar_em'. 'arquivo' é o nome fixo do PDF publicado: não mude depois de os links do site apontarem para ele.",
+  "parar_em": ["Apêndice"],
+  "documentos": [
+    {"arquivo": "01-por-que-mot", "titulo": "Por que Mutirão de Ordenamento Territorial?", "curto": "Por que MOT", "inicio": "Por que \"Mutirão de Ordenamento Territorial\""},
+    {"arquivo": "02-artigo-pofr", "titulo": "O Protocolo de Oitiva Factual Residente (POFR) e o Método MOT", "curto": "Artigo metodológico", "inicio": "O Protocolo de Oitiva Factual Residente"},
+    {"arquivo": "03-compendio", "titulo": "Compêndio do Método MOT", "curto": "Compêndio", "inicio": "Compêndio do Método MOT"},
+    {"arquivo": "04-guia-do-prefeito", "titulo": "Guia do Prefeito", "curto": "Guia do Prefeito", "inicio": "Guia do Prefeito"},
+    {"arquivo": "05-guia-do-agente", "titulo": "Guia de Campo do Agente de Transformação Territorial", "curto": "Guia do Agente", "inicio": "Guia de Campo do Agente"},
+    {"arquivo": "06-manual-do-coordenador", "titulo": "Manual do Coordenador e do Agente de Campo", "curto": "Manual do Coordenador", "inicio": "Manual do Coordenador"},
+    {"arquivo": "07-kit-de-comunicacao", "titulo": "Kit de Comunicação ao Morador", "curto": "Kit de Comunicação", "inicio": "Kit de Comunicação ao Morador"},
+    {"arquivo": "08-guia-do-secretario", "titulo": "Guia do Secretário de Obras e Planejamento", "curto": "Guia do Secretário", "inicio": "Guia do Secretário"},
+    {"arquivo": "09-guia-legislativo", "titulo": "Guia do Agente Legislativo do MOT", "curto": "Guia Legislativo", "inicio": "Guia do Agente Legislativo"},
+    {"arquivo": "10-grade-mestra", "titulo": "Grade-Mestra de Instrumentos", "curto": "Grade-Mestra", "inicio": "Anexo A — Grade-Mestra"}
+  ],
+  "termos_aposentados": [
+    {"termo": "princípio conservador", "motivo": "substituído pelo livre juízo do respondente (18/10)"},
+    {"termo": "vai virar lei", "motivo": "agora: vai servir de base para a lei (18/10)"},
+    {"termo": "campo de observações", "motivo": "nome único: campo de relato (v1.3)"},
+    {"termo": "Motor de Inteligência Artificial", "motivo": "o motor usa regras fixas, sem IA (12/10)"},
+    {"termo": "narrativa produzida por LLM", "motivo": "o motor usa regras fixas, sem IA (12/10)"},
+    {"termo": "força-tarefa de coleta", "motivo": "MOT é o mutirão de coleta; força-tarefa tem outro sentido (v1.3)"},
+    {"termo": "relatório técnico por inteligência artificial", "motivo": "o motor usa regras fixas, sem IA (12/10)"},
+    {"termo": "fotos por azimute", "motivo": "foto retirada do protocolo (24/10)"}
+  ]
+}
