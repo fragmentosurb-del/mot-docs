@@ -6,7 +6,10 @@ Confere, sem mudar nada:
      publicados por este repositório, e todos os links de PDF respondem;
   2. nenhum link de documento aponta para um PDF antigo guardado no Wix (salvo os de PDF_WIX_PERMITIDOS);
   3. o texto da página não tem termo aposentado (lista em documentos.json);
-  4. o Pergunte ao MOT usa a mesma versão e a mesma paginação do e-book que está no ar.
+  4. o Pergunte ao MOT usa a mesma versão e a mesma paginação do e-book que está no ar;
+  5. a página fragmentos.arq.br/capacitacao (subpágina do MOT-App) abre, tem link para o Guia do
+     Prefeito do mot-docs e para o Pergunte ao MOT, todos os seus links de PDF respondem e o texto
+     não tem termo aposentado.
 
 Grava o relatório em vigia.md e termina com código 1 se encontrar algum problema.
 Uso: python3 gerador/vigia.py
@@ -18,6 +21,11 @@ GER = Path(__file__).resolve().parent
 PAGINA = "https://www.fragmentos.arq.br/mot-app"
 DOCS = "https://fragmentosurb-del.github.io/mot-docs/"
 STATUS = "https://motapp-production.up.railway.app/api/pergunte/status"
+CAPACITACAO = "https://www.fragmentos.arq.br/capacitacao"
+CAPACITACAO_LINKS = {  # links que a página da capacitação precisa ter
+    DOCS + "04-guia-do-prefeito.pdf": "Guia do Prefeito",
+    "/pergunte-ao-mot": "Pergunte ao MOT",
+}
 # PDFs do Wix que ainda podem ficar na página, com o motivo
 PDF_WIX_PERMITIDOS = {}  # "Não existe fórmula pronta" virou o Anexo B na v1.4
 UA = {"User-Agent": "Mozilla/5.0 (vigia mot-docs; github.com/fragmentosurb-del/mot-docs)"}
@@ -81,6 +89,30 @@ def main():
             ok.append(f"Pergunte ao MOT com a mesma paginação do e-book no ar (v{no_ar['versao']}, {no_ar['ebook']} p.).")
     except Exception as e:  # noqa: BLE001
         problemas.append(f"Não consegui consultar o status do Pergunte ao MOT: {e}.")
+
+    # página da capacitação
+    try:
+        _, corpo = baixar(CAPACITACAO)
+        cap = corpo.decode("utf-8", "replace")
+        hrefs = {html.unescape(h) for h in re.findall(r'href="([^"]+)"', cap)}
+        for alvo, nome in CAPACITACAO_LINKS.items():
+            if not any(h.rstrip("/").endswith(alvo) for h in hrefs):
+                problemas.append(f"A página da capacitação não tem link para o {nome} (`{alvo}`).")
+        for url in sorted(h for h in hrefs if h.lower().endswith(".pdf")):
+            try:
+                st, ini = baixar(url, 8)
+                if st != 200 or not ini.startswith(b"%PDF"):
+                    problemas.append(f"Na página da capacitação, o link {url} não devolveu um PDF (código {st}).")
+            except Exception as e:  # noqa: BLE001
+                problemas.append(f"Na página da capacitação, o link {url} não abriu: {e}.")
+        texto_cap = re.sub(r"<(script|style)\b.*?</\1>", " ", cap, flags=re.S | re.I)
+        texto_cap = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", texto_cap)))
+        for x in cfg["termos_aposentados"]:
+            for m in re.finditer(re.escape(x["termo"]), texto_cap, flags=re.I):
+                problemas.append(f"Termo aposentado na página da capacitação: “{x['termo']}” ({x['motivo']}) — …{texto_cap[max(0, m.start()-70):m.end()+50]}…")
+        ok.append("Página da capacitação conferida (links para o Guia do Prefeito e o Pergunte ao MOT; termos).")
+    except Exception as e:  # noqa: BLE001
+        problemas.append(f"Não consegui abrir a página da capacitação ({CAPACITACAO}): {e}.")
 
     linhas = [f"**Vigia da página mot-app** — e-book no ar: v{no_ar['versao']}, {no_ar['ebook']} páginas", ""]
     if problemas:
