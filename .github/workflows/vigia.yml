@@ -1,0 +1,48 @@
+name: Vigia semanal da página mot-app
+
+on:
+  schedule:
+    - cron: "37 11 * * 1"   # segundas, 8h37 em Brasília
+  workflow_dispatch:
+  pull_request:          # no PR, só mostra o relatório como comentário
+    paths: ["gerador/vigia.py", ".github/workflows/vigia.yml", "gerador/documentos.json"]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  vigiar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Conferir a página, os links e o Pergunte ao MOT
+        id: vigia
+        continue-on-error: true
+        run: python gerador/vigia.py
+      - name: Mostrar o relatório no pull request
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --body-file vigia.md
+      - name: Abrir, atualizar ou fechar o aviso
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create vigia --color FBCA04 --description "Aviso do vigia semanal" 2>/dev/null || true
+          aberto=$(gh issue list --label vigia --state open --json number --jq '.[0].number')
+          if [ "${{ steps.vigia.outcome }}" = "failure" ]; then
+            if [ -n "$aberto" ]; then
+              gh issue comment "$aberto" --body-file vigia.md
+            else
+              gh issue create --title "Vigia: problema na página mot-app" --label vigia --body-file vigia.md
+            fi
+          elif [ -n "$aberto" ]; then
+            gh issue comment "$aberto" --body-file vigia.md
+            gh issue close "$aberto" --reason completed
+          fi
