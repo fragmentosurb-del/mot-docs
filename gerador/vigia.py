@@ -19,9 +19,7 @@ PAGINA = "https://www.fragmentos.arq.br/mot-app"
 DOCS = "https://fragmentosurb-del.github.io/mot-docs/"
 STATUS = "https://motapp-production.up.railway.app/api/pergunte/status"
 # PDFs do Wix que ainda podem ficar na página, com o motivo
-PDF_WIX_PERMITIDOS = {
-    "0fdb65_c0d985412ad843fe88640850f555fb3f": "Não existe fórmula pronta (fica no Wix até virar anexo do e-book)",
-}
+PDF_WIX_PERMITIDOS = {}  # "Não existe fórmula pronta" virou o Anexo B na v1.4
 UA = {"User-Agent": "Mozilla/5.0 (vigia mot-docs; github.com/fragmentosurb-del/mot-docs)"}
 
 
@@ -90,7 +88,8 @@ def main():
     else:
         linhas += ["Tudo certo."]
     linhas += ["", "Conferido:"] + [f"- {o}" for o in ok]
-    linhas += [f"- Permitidos no Wix: " + "; ".join(PDF_WIX_PERMITIDOS.values())]
+    if PDF_WIX_PERMITIDOS:
+        linhas += ["- Permitidos no Wix: " + "; ".join(PDF_WIX_PERMITIDOS.values())]
     Path("vigia.md").write_text("\n".join(linhas) + "\n", encoding="utf-8")
     print("\n".join(linhas))
     sys.exit(1 if problemas else 0)

@@ -5,7 +5,7 @@ Fonte única do e-book do Método MOT e gerador dos documentos para download em
 
 - `fonte/ebook.dc.html` — o e-book (projeto do Claude Design). **É o único lugar onde o texto muda.**
 - `gerador/documentos.json` — onde começa cada documento individual e a lista de termos aposentados.
-- `gerador/gerar.py` — gera o e-book completo e os 10 documentos, com a mesma paginação e identidade visual.
+- `gerador/gerar.py` — gera o e-book completo e os documentos, com a mesma paginação e identidade visual.
 
 A cada merge no `main`, o GitHub gera tudo e publica em endereços fixos
 (`https://fragmentosurb-del.github.io/mot-docs/<arquivo>.pdf`). Os links do site apontam
@@ -21,7 +21,7 @@ Gerar localmente: `python3 gerador/gerar.py` (requer `beautifulsoup4`, `lxml`, `
 ## Vigia semanal
 
 Toda segunda-feira, às 8h37 (Brasília), `gerador/vigia.py` confere:
-- se a página [mot-app](https://www.fragmentos.arq.br/mot-app) tem link para o e-book e para os 10 documentos, e se todos os links abrem;
+- se a página [mot-app](https://www.fragmentos.arq.br/mot-app) tem link para o e-book e para os documentos individuais, e se todos os links abrem;
 - se algum link ainda aponta para um PDF antigo do Wix;
 - se o texto da página tem termo aposentado (`termos_aposentados` e `termos_pagina`, em `gerador/documentos.json`);
 - se o Pergunte ao MOT usa a mesma versão e a mesma paginação do e-book no ar.
